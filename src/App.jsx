@@ -11,6 +11,7 @@ function App() {
   const [filter, setFilter] = useState('all'); // all, completed, pending
   const [search, setSearch] = useState('');
   const [newTask, setNewTask] = useState({ title: '', description: '', dueDate: '' });
+  const [editingTaskId, setEditingTaskId] = useState(null); // Track the task being edited
 
   // Save tasks to localStorage whenever tasks change
   useEffect(() => {
@@ -32,6 +33,24 @@ function App() {
     setTasks(tasks.filter(task => task.id !== id));
   };
 
+  const startEditingTask = (id) => {
+    const taskToEdit = tasks.find(task => task.id === id);
+    setNewTask({ title: taskToEdit.title, description: taskToEdit.description, dueDate: taskToEdit.dueDate });
+    setEditingTaskId(id);
+  };
+
+  const saveEditedTask = () => {
+    if (!newTask.title || !newTask.dueDate) return alert('Title and Due Date are required!');
+    setTasks(tasks.map(task => task.id === editingTaskId ? { ...task, ...newTask } : task));
+    setNewTask({ title: '', description: '', dueDate: '' });
+    setEditingTaskId(null);
+  };
+
+  const cancelEditing = () => {
+    setNewTask({ title: '', description: '', dueDate: '' });
+    setEditingTaskId(null);
+  };
+
   const filteredTasks = tasks.filter(task => {
     if (filter === 'completed') return task.completed;
     if (filter === 'pending') return !task.completed;
@@ -42,7 +61,7 @@ function App() {
     <div className="App">
       <h1>Task Manager</h1>
 
-      {/* Add Task Form */}
+      {/* Add/Edit Task Form */}
       <div className="task-form">
         <input
           type="text"
@@ -60,7 +79,14 @@ function App() {
           value={newTask.dueDate}
           onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
         />
-        <button onClick={addTask}>Add Task</button>
+        {editingTaskId ? (
+          <>
+            <button onClick={saveEditedTask}>Save</button>
+            <button onClick={cancelEditing}>Cancel</button>
+          </>
+        ) : (
+          <button onClick={addTask}>Add Task</button>
+        )}
       </div>
 
       {/* Filters and Search */}
@@ -87,6 +113,7 @@ function App() {
               <button onClick={() => toggleTaskCompletion(task.id)}>
                 {task.completed ? 'Mark Pending' : 'Mark Completed'}
               </button>
+              <button onClick={() => startEditingTask(task.id)}>Edit</button>
               <button onClick={() => deleteTask(task.id)}>Delete</button>
             </div>
           </div>
